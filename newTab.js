@@ -619,6 +619,43 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  function showEncouragementBubble(taskItemElement) {
+    const messages = [
+      "Great job!",
+      "You're on a roll!",
+      "Keep going!",
+      "You're incredible!",
+      "One step closer!",
+      "Keep it up!",
+      "I'm proud of you!",
+    ];
+  
+    const bubble = document.createElement("div");
+    bubble.className = "encouragement-bubble";
+    bubble.textContent = messages[Math.floor(Math.random() * messages.length)];
+  
+    // Get the task item's position
+    const rect = taskItemElement.getBoundingClientRect();
+
+    // Position to the right of the task item
+    bubble.style.position = "absolute";
+    bubble.style.top = `${rect.top + window.scrollY + rect.height / 2 - 10}px`;
+    bubble.style.left = `${rect.right + 12 + window.scrollX}px`;
+    bubble.style.zIndex = "9999";
+  
+    document.body.appendChild(bubble);
+  
+    // Make the bubble pop out and go away after 3 seconds
+    setTimeout(() => {
+      bubble.style.opacity = "0";
+      bubble.style.transform = "translateY(-20px)";
+    }, 2000);
+  
+    setTimeout(() => {
+      bubble.remove();
+    }, 3000);
+  }
+
   function renderTasks(tasks, backgroundIndex, category) {
     const tasksHeader =
       document.getElementById("tasks-header") || document.createElement("div");
@@ -669,6 +706,9 @@ document.addEventListener("DOMContentLoaded", () => {
       checkbox.addEventListener("change", () => {
         const originalIndex = tasks.indexOf(task);
         tasks[originalIndex].completed = checkbox.checked;
+        if (checkbox.checked) {
+          showEncouragementBubble(taskItem);
+        }
 
         if (tasks[originalIndex].completed) {
           const deleteButton = taskItem.querySelector(".delete-task");
