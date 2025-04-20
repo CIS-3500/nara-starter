@@ -15,6 +15,22 @@
   <body>
     <h1 id="welcome-message">Who do you want to care for today?</h1>
 
+    <!-- Mood Selection -->
+    <div id="mood-container">
+      <div class="mood-option" data-mood="happy">
+        <span class="mood-emoji">😊</span>
+        <span class="mood-label">Happy</span>
+      </div>
+      <div class="mood-option" data-mood="neutral">
+        <span class="mood-emoji">😐</span>
+        <span class="mood-label">Neutral</span>
+      </div>
+      <div class="mood-option" data-mood="stressed">
+        <span class="mood-emoji">😫</span>
+        <span class="mood-label">Stressed</span>
+      </div>
+    </div>
+
     <!-- 
   <div id="deer1-circle" class="deer-circle"></div>
   <div id="deer2-circle" class="deer-circle"></div>
@@ -25,14 +41,16 @@
 
     <div id="categories-container">
       <button class="category-button" data-category="daily">
-        Daily Routine
+        Daily and Weekly Routine
       </button>
       <button class="category-button" data-category="home">Home</button>
       <button class="category-button" data-category="pet">Pet</button>
       <button class="category-button" data-category="friends">Friends</button>
       <button class="category-button" data-category="mind">Mind</button>
       <button class="category-button" data-category="others">Others</button>
+  
     </div>
+  
 
     <!-- Hover Circles -->
     <div id="deer1-circle" class="deer-circle"></div>
