@@ -10,6 +10,36 @@ document.addEventListener("DOMContentLoaded", () => {
   const resetModal = document.getElementById("reset-modal");
   const resetYesButton = document.getElementById("reset-yes");
   const resetNoButton = document.getElementById("reset-no");
+  const moodChecker = document.querySelector(".mood-checker");
+  const emojiOptions = document.querySelectorAll(".emoji");
+
+  (async function () {
+    const overlay   = document.getElementById("quote-overlay");
+    const quoteTxt  = document.getElementById("quote-text");
+    const quoteAuth = document.getElementById("quote-author");
+  
+    try {
+      // fetch a random quote (no API key needed, CORS‑friendly)
+      const res   = await fetch("https://zenquotes.io/api/random");
+      const data  = await res.json();          // [{q:"", a:""}]
+      const quote = data?.[0];
+  
+      // fallback if API unhappy
+      const text   = quote?.q || "Be the change that you wish to see in the world.";
+      const author = quote?.a || "Mahatma Gandhi";
+  
+      quoteTxt.textContent  = `“${text}”`;
+      quoteAuth.textContent = `— ${author}`;
+  
+      // small delay then fade in
+      setTimeout(() => {
+        overlay.classList.remove("quote-hidden");
+        overlay.classList.add("show");
+      }, 800);
+    } catch (err) {
+      console.error("Quote fetch failed:", err);
+    }
+  })();
 
   // for controlling when hovers are active
   let hoverListeners = [];
@@ -126,6 +156,51 @@ document.addEventListener("DOMContentLoaded", () => {
       category: "others", // Link to the "Others" category
     },
   ];
+  
+
+  // Add event listener for each emoji
+  emojiOptions.forEach(emoji => {
+    emoji.addEventListener('click', () => {
+      const emotion = emoji.dataset.emotion;
+      const date = new Date().toISOString().slice(0,10);
+      
+      // Remove selected class from all emojis
+      emojiOptions.forEach(e => e.classList.remove('selected'));
+      
+      // Add selected class to clicked emoji
+      emoji.classList.add('selected');
+      
+      // Store mood in Chrome storage
+      chrome.storage.local.get('moodEntries', data => {
+        const entries = data.moodEntries || {};
+        entries[date] = emotion;
+        
+        chrome.storage.local.set({ moodEntries: entries }, () => {
+          // Show brief confirmation
+          const confirmationMsg = document.createElement('div');
+          confirmationMsg.className = 'mood-confirmation';
+          confirmationMsg.textContent = 'Mood saved!';
+          moodChecker.appendChild(confirmationMsg);
+          
+          // Remove confirmation after 2 seconds
+          setTimeout(() => {
+            confirmationMsg.remove();
+            moodChecker.classList.add('hidden'); // Hide mood checker after selection
+          }, 2000);
+        });
+      });
+      
+    });
+  });
+
+  //make sure mood checker doesn't appear again for the rest of day if mood is selected
+  const today = new Date().toISOString().slice(0,10);
+  chrome.storage.local.get('moodEntries', data => {
+    const entries = data.moodEntries || {};
+    if (entries[today]) {
+      moodChecker.classList.add('hidden'); // Hide mood checker if mood is already selected for today
+    }
+  });
 
   function removeAllListeners() {
     hoverListeners.forEach((listener) => {
@@ -275,6 +350,45 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  function showEncouragingMessage(category) {
+    const EncouragingMessages = [
+      "You are doing great!",
+      "Keep up the good work!",
+      "You're making a difference!",
+      "Every little step counts!",
+      "You're on the right track!",
+      "Your efforts matter!",
+      "You're doing amazing!",
+      "Keep shining!",
+      "You're a star!",
+      "You're making progress!",
+      "You're doing a fantastic job!",
+      "You're a champion!",
+      "You're unstoppable!",
+      "You're a rockstar!",
+    ]
+    const randomIndex = Math.floor(
+      Math.random() * EncouragingMessages.length
+    );
+    const message = EncouragingMessages[randomIndex];
+
+
+    const speechBubble = document.createElement("div");
+    speechBubble.className = "speech-bubble";
+    speechBubble.textContent = message;
+
+    speechBubble.style.left = `${800}px`;
+    speechBubble.style.top = `${300}px`;
+
+    document.body.appendChild(speechBubble);
+    setTimeout(() => {
+      speechBubble.remove();
+    }, 2000); // Remove the message after 2 seconds
+
+  }
+
+
+
   // Updated hardcoded tasks with new categories and random selection
   const taskPool = {
     daily: [
@@ -388,6 +502,7 @@ document.addEventListener("DOMContentLoaded", () => {
           categoriesContainer.classList.add("hidden");
           hideHoverCircles(); // Hide hover circles when the final image is shown
           document.getElementById("welcome-message").classList.add("hidden");
+          document.querySelector('.mood-checker').classList.add("hidden");
 
           // Create and show thank you message
           const thankYouMessage = document.createElement("div");
@@ -401,6 +516,8 @@ document.addEventListener("DOMContentLoaded", () => {
           categoriesContainer.classList.add("hidden");
           hideHoverCircles(); // Hide hover circles when categories are hidden
           document.getElementById("welcome-message").classList.add("hidden");
+          document.querySelector('.mood-checker').classList.add("hidden");
+
         }
         changeBackgroundWithSlide(
           backgroundSets[selectedCategory][backgroundIndex]
@@ -466,6 +583,7 @@ document.addEventListener("DOMContentLoaded", () => {
       categoriesContainer.classList.add("hidden");
       hideHoverCircles();
       document.getElementById("welcome-message").classList.add("hidden");
+      document.querySelector('.mood-checker').classList.add("hidden");
     }
   });
 
@@ -671,6 +789,9 @@ document.addEventListener("DOMContentLoaded", () => {
         tasks[originalIndex].completed = checkbox.checked;
 
         if (tasks[originalIndex].completed) {
+
+          showEncouragingMessage(category); // Show encouraging message when a task is completed
+          
           const deleteButton = taskItem.querySelector(".delete-task");
           if (deleteButton) deleteButton.remove();
         }
@@ -698,6 +819,7 @@ document.addEventListener("DOMContentLoaded", () => {
             categoriesContainer.classList.add("hidden");
             hideHoverCircles(); // Hide hover circles when the final image is shown
             document.getElementById("welcome-message").classList.add("hidden");
+            document.querySelector('.mood-checker').classList.add("hidden");
             // Create and show thank you message
             const thankYouMessage = document.createElement("div");
             thankYouMessage.className = "thank-you-message";
@@ -787,8 +909,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 document
                   .getElementById("welcome-message")
                   .classList.add("hidden");
+                  document.querySelector('.mood-checker').classList.add("hidden");
                 // Create and show thank you message
-                const thankYouMessage = document.createElement("div");
+
+
                 thankYouMessage.className = "thank-you-message";
                 thankYouMessage.textContent =
                   "Thank you for taking good care of me";
@@ -848,6 +972,7 @@ document.addEventListener("DOMContentLoaded", () => {
               document
                 .getElementById("welcome-message")
                 .classList.add("hidden");
+              document.querySelector('.mood-checker').classList.add("hidden");
               // Create and show thank you message
               const thankYouMessage = document.createElement("div");
               thankYouMessage.className = "thank-you-message";
@@ -922,6 +1047,7 @@ document.addEventListener("DOMContentLoaded", () => {
             tasksContainer.classList.add("hidden");
             categoriesContainer.classList.add("hidden");
             document.getElementById("welcome-message").classList.add("hidden");
+            document.querySelector('.mood-checker').classList.add("hidden");
             // Create and show thank you message
             const thankYouMessage = document.createElement("div");
             thankYouMessage.className = "thank-you-message";
