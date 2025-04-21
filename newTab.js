@@ -1,4 +1,42 @@
 document.addEventListener("DOMContentLoaded", () => {
+  // Inspirational Quote Overlay: pick and display a random quote
+  const quotes = [
+    "Believe you can and you're halfway there.",
+    "You are capable of amazing things.",
+    "Don't watch the clock; do what it does. Keep going.",
+    "Your only limit is your mind.",
+    "Dream it. Wish it. Do it.",
+    "Stay positive, work hard, make it happen.",
+    "Success doesn't just find you. You have to go out and get it.",
+    "Great things never come from comfort zones.",
+    "Don't stop until you're proud.",
+    "Keep going. Everything you need will come to you at the perfect time."
+  ];
+  const quoteOverlay = document.getElementById("quote-overlay");
+  if (quoteOverlay) {
+    const idx = Math.floor(Math.random() * quotes.length);
+    quoteOverlay.innerText = quotes[idx];
+  }
+  // Mood selection prompt
+  const moodPrompt = document.getElementById("mood-prompt");
+  const moodButtons = document.querySelectorAll(".mood-button");
+  if (moodPrompt && moodButtons.length) {
+    chrome.storage.local.get("mood", (data) => {
+      if (!data.mood) {
+        moodPrompt.classList.remove("hidden");
+      }
+    });
+    moodButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const mood = btn.dataset.mood;
+        chrome.storage.local.set({ mood }, () => {
+          moodPrompt.classList.add("hidden");
+          console.log("Mood set to", mood);
+        });
+      });
+    });
+  }
+  // Create background container
   const backgroundContainer = document.createElement("div");
   backgroundContainer.className = "background-container";
   document.body.appendChild(backgroundContainer);
@@ -673,6 +711,12 @@ document.addEventListener("DOMContentLoaded", () => {
         if (tasks[originalIndex].completed) {
           const deleteButton = taskItem.querySelector(".delete-task");
           if (deleteButton) deleteButton.remove();
+          // Show inspirational quote overlay when a task is checked
+          if (quoteOverlay) {
+            const idx = Math.floor(Math.random() * quotes.length);
+            quoteOverlay.innerText = quotes[idx];
+            quoteOverlay.classList.remove("hidden");
+          }
         }
 
         let newPosition = 0;
