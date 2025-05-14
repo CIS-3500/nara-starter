@@ -3,6 +3,49 @@ document.addEventListener("DOMContentLoaded", () => {
   backgroundContainer.className = "background-container";
   document.body.appendChild(backgroundContainer);
 
+  // Encouraging messages for task completion
+  const encouragingMessages = [
+    "Great job! 🌟",
+    "You're making progress! 💪",
+    "Keep going! 🚀",
+    "You're doing amazing! ✨",
+    "That's the spirit! 🌈",
+    "You're on fire! 🔥",
+    "Fantastic work! 🎯",
+    "You're crushing it! 💫",
+    "Way to go! 🌟",
+    "You're unstoppable! ⭐"
+  ];
+
+  // Speech bubble elements and functions
+  const speechBubble = document.getElementById("speech-bubble");
+  const speechText = speechBubble.querySelector("p");
+  let speechBubbleTimeout;
+
+  function showEncouragingMessage(taskElement) {
+    // Get random message
+    const message = encouragingMessages[Math.floor(Math.random() * encouragingMessages.length)];
+    speechText.textContent = message;
+
+    // Position the bubble above the task
+    const taskRect = taskElement.getBoundingClientRect();
+    speechBubble.style.left = `${taskRect.left + taskRect.width / 2 - 100}px`; // Center bubble (200px width / 2)
+    speechBubble.style.top = `${taskRect.top - 80}px`; // Position above task
+
+    // Show the bubble
+    speechBubble.classList.remove("hidden");
+
+    // Clear any existing timeout
+    if (speechBubbleTimeout) {
+      clearTimeout(speechBubbleTimeout);
+    }
+
+    // Hide the bubble after 2 seconds
+    speechBubbleTimeout = setTimeout(() => {
+      speechBubble.classList.add("hidden");
+    }, 2000);
+  }
+
   const categoriesContainer = document.getElementById("categories-container");
   const tasksContainer = document.getElementById("tasks-container");
   const taskList = document.getElementById("task-list");
@@ -10,6 +53,63 @@ document.addEventListener("DOMContentLoaded", () => {
   const resetModal = document.getElementById("reset-modal");
   const resetYesButton = document.getElementById("reset-yes");
   const resetNoButton = document.getElementById("reset-no");
+
+  // Mood selection functionality
+  const moodBox = document.getElementById("mood-box");
+  const moodButtons = moodBox.querySelectorAll(".mood-button");
+  const moodStatus = moodBox.querySelector(".mood-status");
+
+  // Load saved mood from storage
+  chrome.storage.local.get("mood", (data) => {
+    if (data.mood) {
+      const { mood, timestamp } = data.mood;
+      const today = new Date().toDateString();
+      
+      // Only show saved mood if it was set today
+      if (timestamp === today) {
+        const selectedButton = moodBox.querySelector(`[data-mood="${mood}"]`);
+        if (selectedButton) {
+          selectedButton.classList.add("selected");
+          updateMoodStatus(mood);
+        }
+      }
+    }
+  });
+
+  // Handle mood selection
+  moodButtons.forEach(button => {
+    button.addEventListener("click", () => {
+      const mood = button.dataset.mood;
+      
+      // Remove selection from all buttons
+      moodButtons.forEach(btn => btn.classList.remove("selected"));
+      
+      // Add selection to clicked button
+      button.classList.add("selected");
+      
+      // Update status text
+      updateMoodStatus(mood);
+
+      // Save mood with timestamp
+      chrome.storage.local.set({
+        mood: {
+          mood: mood,
+          timestamp: new Date().toDateString()
+        }
+      });
+    });
+  });
+
+  function updateMoodStatus(mood) {
+    const messages = {
+      happy: "Feeling great today! 🌟",
+      neutral: "Taking it easy 🌤",
+      stressed: "Taking deep breaths 🫧",
+      energetic: "Full of energy! ✨",
+      tired: "Time to rest 🌙"
+    };
+    moodStatus.textContent = messages[mood] || "How are you feeling?";
+  }
 
   // for controlling when hovers are active
   let hoverListeners = [];
@@ -673,6 +773,8 @@ document.addEventListener("DOMContentLoaded", () => {
         if (tasks[originalIndex].completed) {
           const deleteButton = taskItem.querySelector(".delete-task");
           if (deleteButton) deleteButton.remove();
+          // Show encouraging message when task is completed
+          showEncouragingMessage(taskItem);
         }
 
         let newPosition = 0;
